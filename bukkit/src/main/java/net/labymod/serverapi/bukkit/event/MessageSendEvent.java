@@ -19,9 +19,9 @@ public class MessageSendEvent extends Event implements Cancellable {
     @Getter
     private final static HandlerList handlerList = new HandlerList();
 
-    private Player player;
-    private String messageKey;
-    private JsonElement jsonElement;
+    private final Player player;
+    private final String messageKey;
+    private final JsonElement jsonElement;
     @Setter
     private boolean cancelled;
 

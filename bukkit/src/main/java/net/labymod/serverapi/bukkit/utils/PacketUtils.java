@@ -17,7 +17,7 @@ import java.lang.reflect.Method;
  */
 public class PacketUtils {
 
-    private String version;
+    private final String version;
 
     private Class<?> packetClass;
 
@@ -34,34 +34,34 @@ public class PacketUtils {
     private Field networkManagerField;
 
     public PacketUtils() {
-        this.version = Bukkit.getServer().getClass().getPackage().getName().replace( ".", "," ).split( "," )[3];
+        this.version = Bukkit.getServer().getClass().getPackage().getName().replace(".", ",").split(",")[3];
 
         try {
-            this.packetClass = getNmsClass( "Packet" );
-            this.packetPlayOutCustomPayloadClass = getNmsClass( "PacketPlayOutCustomPayload" );
-            this.networkManagerField = getNmsClass( "PlayerConnection" ).getDeclaredField( "networkManager" );
-        } catch ( ClassNotFoundException | NoSuchFieldException e ) {
+            this.packetClass = getNmsClass("Packet");
+            this.packetPlayOutCustomPayloadClass = getNmsClass("PacketPlayOutCustomPayload");
+            this.networkManagerField = getNmsClass("PlayerConnection").getDeclaredField("networkManager");
+        } catch (ClassNotFoundException | NoSuchFieldException e) {
             e.printStackTrace();
         }
 
-        if ( this.packetPlayOutCustomPayloadClass != null ) {
-            for ( Constructor<?> constructors : packetPlayOutCustomPayloadClass.getDeclaredConstructors() ) {
-                if ( constructors.getParameterTypes().length == 2 && constructors.getParameterTypes()[1] == byte[].class ) {
+        if (this.packetPlayOutCustomPayloadClass != null) {
+            for (Constructor<?> constructors : packetPlayOutCustomPayloadClass.getDeclaredConstructors()) {
+                if (constructors.getParameterTypes().length == 2 && constructors.getParameterTypes()[1] == byte[].class) {
                     customPayloadHasBytes = true;
                     customPayloadConstructor = constructors;
-                } else if ( constructors.getParameterTypes().length == 2 && constructors.getParameterTypes()[1].getSimpleName().equals( "PacketDataSerializer" ) ) {
+                } else if (constructors.getParameterTypes().length == 2 && constructors.getParameterTypes()[1].getSimpleName().equals("PacketDataSerializer")) {
                     customPayloadConstructor = constructors;
                 }
             }
 
-            if ( !customPayloadHasBytes ) {
+            if (!customPayloadHasBytes) {
                 try {
-                    packetDataSerializerClass = getNmsClass( "PacketDataSerializer" );
-                    packetDataSerializerConstructor = packetDataSerializerClass.getDeclaredConstructor( ByteBuf.class );
-                } catch ( Exception ex ) {
+                    packetDataSerializerClass = getNmsClass("PacketDataSerializer");
+                    packetDataSerializerConstructor = packetDataSerializerClass.getDeclaredConstructor(ByteBuf.class);
+                } catch (Exception ex) {
                     ex.printStackTrace();
-                    LabyModPlugin.getInstance().getLogger().severe( "Couldn't find a valid constructor for PacketPlayOutCustomPayload. Disabling the plugin." );
-                    Bukkit.getPluginManager().disablePlugin( LabyModPlugin.getInstance() );
+                    LabyModPlugin.getInstance().getLogger().severe("Couldn't find a valid constructor for PacketPlayOutCustomPayload. Disabling the plugin.");
+                    Bukkit.getPluginManager().disablePlugin(LabyModPlugin.getInstance());
                 }
             }
         }
@@ -73,14 +73,14 @@ public class PacketUtils {
      * @param player the bukkit-player
      * @return the nms-handle
      */
-    public Object getPlayerHandle( Player player ) {
+    public Object getPlayerHandle(Player player) {
         try {
-            if ( getHandleMethod == null )
-                getHandleMethod = player.getClass().getMethod( "getHandle" );
+            if (getHandleMethod == null)
+                getHandleMethod = player.getClass().getMethod("getHandle");
 
             // Getting the player's nms-handle
-            return getHandleMethod.invoke( player );
-        } catch ( Exception ex ) {
+            return getHandleMethod.invoke(player);
+        } catch (Exception ex) {
             ex.printStackTrace();
         }
 
@@ -93,14 +93,14 @@ public class PacketUtils {
      * @param nmsPlayer the player's nms-handle
      * @return the player-connection
      */
-    public Object getPlayerConnection( Object nmsPlayer ) {
+    public Object getPlayerConnection(Object nmsPlayer) {
         try {
-            if ( playerConnectionField == null )
-                playerConnectionField = nmsPlayer.getClass().getField( "playerConnection" );
+            if (playerConnectionField == null)
+                playerConnectionField = nmsPlayer.getClass().getField("playerConnection");
 
             // Getting the player's connection
-            return playerConnectionField.get( nmsPlayer );
-        } catch ( IllegalAccessException | NoSuchFieldException e ) {
+            return playerConnectionField.get(nmsPlayer);
+        } catch (IllegalAccessException | NoSuchFieldException e) {
             e.printStackTrace();
         }
 
@@ -113,17 +113,17 @@ public class PacketUtils {
      * @param player the player the packet should be sent to
      * @param packet the packet that should be sent to the player
      */
-    public void sendPacket( Player player, Object packet ) {
+    public void sendPacket(Player player, Object packet) {
         try {
             // Getting the player's nms-handle
-            Object nmsPlayer = getPlayerHandle( player );
+            Object nmsPlayer = getPlayerHandle(player);
 
             // Getting the player's connection
-            Object playerConnection = getPlayerConnection( nmsPlayer );
+            Object playerConnection = getPlayerConnection(nmsPlayer);
 
             // Sending the packet
-            playerConnection.getClass().getMethod( "sendPacket", packetClass ).invoke( playerConnection, packet );
-        } catch ( Exception ex ) {
+            playerConnection.getClass().getMethod("sendPacket", packetClass).invoke(playerConnection, packet);
+        } catch (Exception ex) {
             ex.printStackTrace();
         }
     }
@@ -135,11 +135,11 @@ public class PacketUtils {
      * @param bytes   the bytes that should be sent with the packet
      * @return a plugin-message packet
      */
-    public Object getPluginMessagePacket( String channel, byte[] bytes ) {
+    public Object getPluginMessagePacket(String channel, byte[] bytes) {
         try {
-            return customPayloadConstructor.newInstance( channel, customPayloadHasBytes ? bytes : packetDataSerializerConstructor.newInstance( Unpooled.wrappedBuffer( bytes ) ) );
-        } catch ( NullPointerException | InstantiationException | IllegalAccessException | InvocationTargetException e ) {
-            LabyModPlugin.getInstance().getLogger().severe( "Couldn't construct a custom-payload packet (Channel: " + channel + "):" );
+            return customPayloadConstructor.newInstance(channel, customPayloadHasBytes ? bytes : packetDataSerializerConstructor.newInstance(Unpooled.wrappedBuffer(bytes)));
+        } catch (NullPointerException | InstantiationException | IllegalAccessException | InvocationTargetException e) {
+            LabyModPlugin.getInstance().getLogger().severe("Couldn't construct a custom-payload packet (Channel: " + channel + "):");
             e.printStackTrace();
         }
 
@@ -153,7 +153,7 @@ public class PacketUtils {
      * @return the multi-version compatible name of the class including the package
      * @throws ClassNotFoundException if the class wasn't found
      */
-    public Class<?> getNmsClass( String nmsClassName ) throws ClassNotFoundException {
-        return Class.forName( "net.minecraft.server." + version + "." + nmsClassName );
+    public Class<?> getNmsClass(String nmsClassName) throws ClassNotFoundException {
+        return Class.forName("net.minecraft.server." + version + "." + nmsClassName);
     }
 }

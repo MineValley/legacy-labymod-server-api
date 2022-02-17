@@ -19,11 +19,11 @@ public class LabyModPlayerJoinEvent extends Event {
     @Getter
     private final static HandlerList handlerList = new HandlerList();
 
-    private Player player;
-    private String modVersion;
-    private boolean chunkCachingEnabled;
-    private int chunkCachingVersion;
-    private List<Addon> addons;
+    private final Player player;
+    private final String modVersion;
+    private final boolean chunkCachingEnabled;
+    private final int chunkCachingVersion;
+    private final List<Addon> addons;
 
     @Override
     public HandlerList getHandlers() {

@@ -13,7 +13,7 @@ public class PlayerJoinListener implements Listener {
 
     @EventHandler
     public void onJoin( PlayerJoinEvent event ) {
-        Player player = event.getPlayer();
+        final Player player = event.getPlayer();
 
         // Sending the permissions
         LabyModPlugin.getInstance().sendPermissions( player );

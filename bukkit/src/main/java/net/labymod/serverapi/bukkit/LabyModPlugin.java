@@ -32,17 +32,13 @@ import java.util.Map;
  */
 public class LabyModPlugin extends JavaPlugin {
 
+    private static final JsonParser JSON_PARSER = new JsonParser();
     @Getter
     private static LabyModPlugin instance;
-
-    private static final JsonParser JSON_PARSER = new JsonParser();
-
+    @Getter
+    private final LabyModAPI api = new LabyModAPI();
     @Getter
     private LabyModConfig labyModConfig;
-
-    @Getter
-    private LabyModAPI api = new LabyModAPI();
-
     @Getter
     private PacketUtils packetUtils;
 
@@ -54,104 +50,104 @@ public class LabyModPlugin extends JavaPlugin {
         this.packetUtils = new PacketUtils();
 
         // Creating the data folder
-        if ( !getDataFolder().exists() )
+        if (!getDataFolder().exists())
             getDataFolder().mkdir();
 
         // Initializing the config
-        this.labyModConfig = new BukkitLabyModConfig( new File( getDataFolder(), "config.yml" ) );
+        this.labyModConfig = new BukkitLabyModConfig(new File(getDataFolder(), "config.yml"));
 
         // Registering the listeners
-        Bukkit.getPluginManager().registerEvents( new PlayerJoinListener(), this );
+        Bukkit.getPluginManager().registerEvents(new PlayerJoinListener(), this);
 
         // The LABYMOD plugin channel is higly deprecated and shouldn't be used - we just listen to it to retrieve old labymod clients.
         // Registering the incoming plugin messages listeners
-        getServer().getMessenger().registerIncomingPluginChannel( this, "LABYMOD", new PluginMessageListener() {
+        getServer().getMessenger().registerIncomingPluginChannel(this, "LABYMOD", new PluginMessageListener() {
             @Override
-            public void onPluginMessageReceived( String channel, final Player player, byte[] bytes ) {
+            public void onPluginMessageReceived(String channel, final Player player, byte[] bytes) {
                 // Converting the byte array into a byte buffer
-                ByteBuf buf = Unpooled.wrappedBuffer( bytes );
+                ByteBuf buf = Unpooled.wrappedBuffer(bytes);
 
                 try {
                     // Reading the version from the buffer
-                    final String version = api.readString( buf, Short.MAX_VALUE );
+                    final String version = api.readString(buf, Short.MAX_VALUE);
 
                     // Calling the event synchronously
-                    Bukkit.getScheduler().runTask( LabyModPlugin.this, new Runnable() {
+                    Bukkit.getScheduler().runTask(LabyModPlugin.this, new Runnable() {
                         @Override
                         public void run() {
                             // Checking whether the player is still online
-                            if ( !player.isOnline() )
+                            if (!player.isOnline())
                                 return;
 
                             // Calling the LabyModPlayerJoinEvent
-                            Bukkit.getPluginManager().callEvent( new LabyModPlayerJoinEvent( player, version, false, 0, new ArrayList<Addon>() ) );
+                            Bukkit.getPluginManager().callEvent(new LabyModPlayerJoinEvent(player, version, false, 0, new ArrayList<Addon>()));
                         }
-                    } );
-                } catch ( RuntimeException ex ) {
+                    });
+                } catch (RuntimeException ex) {
                 }
             }
-        } );
+        });
 
-        getServer().getMessenger().registerIncomingPluginChannel( this, "LMC", new PluginMessageListener() {
+        getServer().getMessenger().registerIncomingPluginChannel(this, "LMC", new PluginMessageListener() {
             @Override
-            public void onPluginMessageReceived( String channel, final Player player, byte[] bytes ) {
+            public void onPluginMessageReceived(String channel, final Player player, byte[] bytes) {
                 // Converting the byte array into a byte buffer
-                ByteBuf buf = Unpooled.wrappedBuffer( bytes );
+                ByteBuf buf = Unpooled.wrappedBuffer(bytes);
 
                 try {
                     // Reading the message key
-                    final String messageKey = api.readString( buf, Short.MAX_VALUE );
-                    final String messageContents = api.readString( buf, Short.MAX_VALUE );
-                    final JsonElement jsonMessage = JSON_PARSER.parse( messageContents );
+                    final String messageKey = api.readString(buf, Short.MAX_VALUE);
+                    final String messageContents = api.readString(buf, Short.MAX_VALUE);
+                    final JsonElement jsonMessage = JSON_PARSER.parse(messageContents);
 
                     // Calling the event synchronously
-                    Bukkit.getScheduler().runTask( LabyModPlugin.this, new Runnable() {
+                    Bukkit.getScheduler().runTask(LabyModPlugin.this, new Runnable() {
                         @Override
                         public void run() {
                             // Checking whether the player is still online
-                            if ( !player.isOnline() )
+                            if (!player.isOnline())
                                 return;
 
                             // Listening to the INFO (join) message
-                            if ( messageKey.equals( "INFO" ) && jsonMessage.isJsonObject() ) {
+                            if (messageKey.equals("INFO") && jsonMessage.isJsonObject()) {
                                 JsonObject jsonObject = jsonMessage.getAsJsonObject();
-                                String version = jsonObject.has( "version" )
-                                        && jsonObject.get( "version" ).isJsonPrimitive()
-                                        && jsonObject.get( "version" ).getAsJsonPrimitive().isString() ? jsonObject.get( "version" ).getAsString() : "Unknown";
+                                String version = jsonObject.has("version")
+                                        && jsonObject.get("version").isJsonPrimitive()
+                                        && jsonObject.get("version").getAsJsonPrimitive().isString() ? jsonObject.get("version").getAsString() : "Unknown";
 
                                 boolean chunkCachingEnabled = false;
                                 int chunkCachingVersion = 0;
 
-                                if ( jsonObject.has( "ccp" ) && jsonObject.get( "ccp" ).isJsonObject() ) {
-                                    JsonObject chunkCachingObject = jsonObject.get( "ccp" ).getAsJsonObject();
+                                if (jsonObject.has("ccp") && jsonObject.get("ccp").isJsonObject()) {
+                                    JsonObject chunkCachingObject = jsonObject.get("ccp").getAsJsonObject();
 
-                                    if ( chunkCachingObject.has( "enabled" ) )
-                                        chunkCachingEnabled = chunkCachingObject.get( "enabled" ).getAsBoolean();
+                                    if (chunkCachingObject.has("enabled"))
+                                        chunkCachingEnabled = chunkCachingObject.get("enabled").getAsBoolean();
 
-                                    if ( chunkCachingObject.has( "version" ) )
-                                        chunkCachingVersion = chunkCachingObject.get( "version" ).getAsInt();
+                                    if (chunkCachingObject.has("version"))
+                                        chunkCachingVersion = chunkCachingObject.get("version").getAsInt();
                                 }
 
-                                Bukkit.getPluginManager().callEvent( new LabyModPlayerJoinEvent( player, version,
-                                        chunkCachingEnabled, chunkCachingVersion, Addon.getAddons( jsonObject ) ) );
+                                Bukkit.getPluginManager().callEvent(new LabyModPlayerJoinEvent(player, version,
+                                        chunkCachingEnabled, chunkCachingVersion, Addon.getAddons(jsonObject)));
                                 return;
                             }
 
                             // Calling the MessageReceiveEvent
-                            Bukkit.getPluginManager().callEvent( new MessageReceiveEvent( player, messageKey, jsonMessage ) );
+                            Bukkit.getPluginManager().callEvent(new MessageReceiveEvent(player, messageKey, jsonMessage));
                         }
-                    } );
-                } catch ( RuntimeException ignored ) {
+                    });
+                } catch (RuntimeException ignored) {
                 }
             }
-        } );
+        });
     }
 
     @Override
     public void onDisable() {
         // Unregistering the plugin-message listeners
-        getServer().getMessenger().unregisterIncomingPluginChannel( this, "LABYMOD" );
-        getServer().getMessenger().unregisterIncomingPluginChannel( this, "LMC" );
+        getServer().getMessenger().unregisterIncomingPluginChannel(this, "LABYMOD");
+        getServer().getMessenger().unregisterIncomingPluginChannel(this, "LMC");
     }
 
     /**
@@ -159,16 +155,16 @@ public class LabyModPlugin extends JavaPlugin {
      *
      * @param player the player the permissions should be sent to
      */
-    public void sendPermissions( Player player ) {
-        Map<Permission, Boolean> modifiedPermissions = new HashMap<>( labyModConfig.getPermissions() );
+    public void sendPermissions(Player player) {
+        Map<Permission, Boolean> modifiedPermissions = new HashMap<>(labyModConfig.getPermissions());
 
         // Calling the Bukkit event
-        PermissionsSendEvent sendEvent = new PermissionsSendEvent( player, modifiedPermissions, false );
-        Bukkit.getPluginManager().callEvent( sendEvent );
+        PermissionsSendEvent sendEvent = new PermissionsSendEvent(player, modifiedPermissions, false);
+        Bukkit.getPluginManager().callEvent(sendEvent);
 
         // Sending the packet
-        if ( !sendEvent.isCancelled() && sendEvent.getPermissions().size() > 0 )
-            packetUtils.sendPacket( player, packetUtils.getPluginMessagePacket( "LMC", api.getBytesToSend( modifiedPermissions ) ) );
+        if (!sendEvent.isCancelled() && sendEvent.getPermissions().size() > 0)
+            packetUtils.sendPacket(player, packetUtils.getPluginMessagePacket("LMC", api.getBytesToSend(modifiedPermissions)));
     }
 
     /**
@@ -178,16 +174,16 @@ public class LabyModPlugin extends JavaPlugin {
      * @param messageKey      the message's key
      * @param messageContents the message's contents
      */
-    public void sendServerMessage( Player player, String messageKey, JsonElement messageContents ) {
-        messageContents = cloneJson( messageContents );
+    public void sendServerMessage(Player player, String messageKey, JsonElement messageContents) {
+        messageContents = cloneJson(messageContents);
 
         // Calling the Bukkit event
-        MessageSendEvent sendEvent = new MessageSendEvent( player, messageKey, messageContents, false );
-        Bukkit.getPluginManager().callEvent( sendEvent );
+        MessageSendEvent sendEvent = new MessageSendEvent(player, messageKey, messageContents, false);
+        Bukkit.getPluginManager().callEvent(sendEvent);
 
         // Sending the packet
-        if ( !sendEvent.isCancelled() )
-            packetUtils.sendPacket( player, packetUtils.getPluginMessagePacket( "LMC", api.getBytesToSend( messageKey, messageContents.toString() ) ) );
+        if (!sendEvent.isCancelled())
+            packetUtils.sendPacket(player, packetUtils.getPluginMessagePacket("LMC", api.getBytesToSend(messageKey, messageContents.toString())));
     }
 
     /**
@@ -196,10 +192,10 @@ public class LabyModPlugin extends JavaPlugin {
      * @param cloneElement the element that should be cloned
      * @return the cloned element
      */
-    public JsonElement cloneJson( JsonElement cloneElement ) {
+    public JsonElement cloneJson(JsonElement cloneElement) {
         try {
-            return JSON_PARSER.parse( cloneElement.toString() );
-        } catch ( JsonParseException ex ) {
+            return JSON_PARSER.parse(cloneElement.toString());
+        } catch (JsonParseException ex) {
             ex.printStackTrace();
             return null;
         }

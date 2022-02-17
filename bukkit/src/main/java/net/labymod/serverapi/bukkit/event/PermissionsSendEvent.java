@@ -20,7 +20,7 @@ import java.util.Map;
 public class PermissionsSendEvent extends Event implements Cancellable {
 
     @Getter
-    private final static HandlerList handlerList = new HandlerList();
+    private static HandlerList handlerList = new HandlerList();
 
     private Player player;
     private Map<Permission, Boolean> permissions = new EnumMap<>( Permission.class );

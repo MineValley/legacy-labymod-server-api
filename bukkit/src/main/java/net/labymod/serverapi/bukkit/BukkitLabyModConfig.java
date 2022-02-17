@@ -12,30 +12,30 @@ import java.io.IOException;
  */
 public class BukkitLabyModConfig extends LabyModConfig {
 
-    private FileConfiguration fileConfiguration;
+    private final FileConfiguration fileConfiguration;
 
-    public BukkitLabyModConfig( File file ) {
-        super( file );
+    public BukkitLabyModConfig(File file) {
+        super(file);
 
         // Creating the file if it doesn't exist
-        if ( !file.exists() )
+        if (!file.exists())
             try {
                 file.createNewFile();
-            } catch ( IOException e ) {
+            } catch (IOException e) {
                 e.printStackTrace();
             }
 
         // Loading the config
-        this.fileConfiguration = YamlConfiguration.loadConfiguration( file );
+        this.fileConfiguration = YamlConfiguration.loadConfiguration(file);
 
         // Initializing the config
-        init( file );
+        init(file);
     }
 
     @Override
-    public void init( File file ) {
+    public void init(File file) {
         // Applying options to the config
-        fileConfiguration.options().copyDefaults( true );
+        fileConfiguration.options().copyDefaults(true);
 
         // Adding the defaults
         addDefaults();
@@ -48,20 +48,20 @@ public class BukkitLabyModConfig extends LabyModConfig {
     }
 
     @Override
-    public Object getValue( String key ) {
-        return fileConfiguration.get( key );
+    public Object getValue(String key) {
+        return fileConfiguration.get(key);
     }
 
     @Override
-    public void addDefault( String key, Object value ) {
-        fileConfiguration.addDefault( key, value );
+    public void addDefault(String key, Object value) {
+        fileConfiguration.addDefault(key, value);
     }
 
     @Override
     public void saveConfig() {
         try {
-            fileConfiguration.save( file );
-        } catch ( IOException e ) {
+            fileConfiguration.save(file);
+        } catch (IOException e) {
             e.printStackTrace();
         }
     }
