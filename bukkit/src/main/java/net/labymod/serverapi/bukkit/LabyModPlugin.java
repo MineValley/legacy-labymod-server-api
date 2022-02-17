@@ -32,6 +32,7 @@ import java.util.Map;
  */
 public class LabyModPlugin extends JavaPlugin {
 
+    public static final String CHANNEL_NAME = "labymod3:main";
     private static final JsonParser JSON_PARSER = new JsonParser();
     @Getter
     private static LabyModPlugin instance;
@@ -88,7 +89,7 @@ public class LabyModPlugin extends JavaPlugin {
             }
         });
 
-        getServer().getMessenger().registerIncomingPluginChannel(this, "LMC", new PluginMessageListener() {
+        getServer().getMessenger().registerIncomingPluginChannel(this, CHANNEL_NAME, new PluginMessageListener() {
             @Override
             public void onPluginMessageReceived(String channel, final Player player, byte[] bytes) {
                 // Converting the byte array into a byte buffer
@@ -147,7 +148,7 @@ public class LabyModPlugin extends JavaPlugin {
     public void onDisable() {
         // Unregistering the plugin-message listeners
         getServer().getMessenger().unregisterIncomingPluginChannel(this, "LABYMOD");
-        getServer().getMessenger().unregisterIncomingPluginChannel(this, "LMC");
+        getServer().getMessenger().unregisterIncomingPluginChannel(this, CHANNEL_NAME);
     }
 
     /**
@@ -164,7 +165,7 @@ public class LabyModPlugin extends JavaPlugin {
 
         // Sending the packet
         if (!sendEvent.isCancelled() && sendEvent.getPermissions().size() > 0)
-            packetUtils.sendPacket(player, packetUtils.getPluginMessagePacket("LMC", api.getBytesToSend(modifiedPermissions)));
+            packetUtils.sendPacket(player, packetUtils.getPluginMessagePacket(CHANNEL_NAME, api.getBytesToSend(modifiedPermissions)));
     }
 
     /**
@@ -183,7 +184,7 @@ public class LabyModPlugin extends JavaPlugin {
 
         // Sending the packet
         if (!sendEvent.isCancelled())
-            packetUtils.sendPacket(player, packetUtils.getPluginMessagePacket("LMC", api.getBytesToSend(messageKey, messageContents.toString())));
+            packetUtils.sendPacket(player, packetUtils.getPluginMessagePacket(CHANNEL_NAME, api.getBytesToSend(messageKey, messageContents.toString())));
     }
 
     /**
